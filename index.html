@@ -38,7 +38,7 @@
 <div class="scorebox"><div class="score" id="score">0 : 0</div><div class="roundtxt" id="roundLabel">RONDA 1 / 3</div><div class="roundtxt" id="clock">01:30</div></div>
 <div class="fighter-hud right"><b id="rightName">RIVAL</b><small id="rightPokemon">CHARIZARD</small><div class="health"><i id="rightHp"></i></div></div>
 </div>
-<div class="arena-shell"><canvas id="arena" width="1000" height="600"></canvas><div class="arena-caption"><span>CHAMPIONSHIP ARENA · INDOOR STADIUM</span><span id="netLabel">P2P CONNECTED</span></div>
+<div class="arena-shell"><canvas id="arena" width="1000" height="600"></canvas><div class="arena-caption"><span>CHAMPIONSHIP ARENA · INDOOR STADIUM</span><span id="netLabel">ARTWORK EDITION · P2P</span></div>
 <div id="overlay" class="overlay"><div class="overlay-card"><h2 id="overlayTitle">ROUND WIN</h2><p id="overlayText">La siguiente ronda comienza en breve.</p><button id="overlayBtn" class="btn gold">CONTINUAR</button></div></div></div>
 <div class="control-row"><div class="move-pad"><button class="padbtn pad-up" data-move="up">▲</button><button class="padbtn pad-left" data-move="left">◀</button><button class="padbtn pad-down" data-move="down">▼</button><button class="padbtn pad-right" data-move="right">▶</button></div>
 <div class="skills"><button id="qBtn" class="skillbtn"><strong>Q</strong><span id="qLabel">HABILIDAD</span></button><button id="eBtn" class="skillbtn"><strong>E</strong><span id="eLabel">ESQUIVA</span></button><button id="ultBtn" class="skillbtn ult"><strong>✦</strong><span id="ultLabel">SÚPER 0%</span></button><button id="fireBtn" class="skillbtn" style="border-color:#c28f54"><strong>●</strong><span>ATACAR</span></button></div></div>
@@ -58,7 +58,7 @@ const P=[
 {id:'lucario',dex:448,art:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/448.png',name:'Lucario',emoji:'🔵',role:'TÉCNICO',color:'#477eaa',dark:'#29475f',hp:1050,speed:200,damage:91,rate:.58,q:'AURA CARGADA',e:'CONTRAATAQUE',ult:'PULSO AURA',qcd:6,ecd:8,desc:'Equilibrado y preciso. Premia los impactos bien apuntados.'}
 ];
 const pokemonArt={};
-P.forEach(p=>{const image=new Image();image.crossOrigin='anonymous';image.decoding='async';image.onload=()=>{p.artReady=true};image.onerror=()=>{p.artFailed=true};image.src=p.art;pokemonArt[p.id]=image;});
+P.forEach(p=>{const image=new Image();image.decoding='async';image.onload=()=>{p.artReady=true};image.onerror=()=>{p.artFailed=true;console.warn('No se pudo cargar artwork:',p.name,p.art)};image.src=p.art;pokemonArt[p.id]=image;});
 let selected=0,peer=null,conn=null,role='',room='',remoteInput={},localInput={dx:0,dy:0,ax:1,ay:0,fire:false,q:0,e:0,u:0},keys={},game=null,lastFrame=0,lastSend=0,lastNet=0,guestStarted=false,particles=[],damageTexts=[],effects=[],aim={x:760,y:300};
 const randCode=()=>Math.random().toString(36).slice(2,10).toUpperCase().padEnd(8,'A');
 function setStatus(t){$('lobbyStatus').textContent=t}
@@ -161,9 +161,7 @@ const top=size*(f.id==='char'?.89:.82);
 ctx.shadowColor=p.color;ctx.shadowBlur=f.inv>0?23:8;ctx.drawImage(image,-size/2,-top,size,size);ctx.shadowBlur=0;
 if(f.hurt>0){ctx.save();ctx.globalCompositeOperation='source-atop';ctx.globalAlpha=Math.min(.7,f.hurt*2.8);ctx.fillStyle='#fff';ctx.fillRect(-size/2,-top,size,size);ctx.restore()}
 }else{
-const fallback=ctx.createRadialGradient(-12,-42,3,0,-10,size*.45);fallback.addColorStop(0,'#fff');fallback.addColorStop(.22,p.color);fallback.addColorStop(1,p.dark);
-ctx.fillStyle=fallback;ctx.beginPath();ctx.ellipse(0,-16,size*.27,size*.34,0,0,Math.PI*2);ctx.fill();
-ctx.font='bold '+Math.round(size*.45)+'px system-ui';ctx.textAlign='center';ctx.fillText(p.emoji,0,-8);
+ctx.textAlign='center';ctx.font='900 10px system-ui';ctx.fillStyle='#d8c18c';ctx.fillText(image&&image.complete?'ILUSTRACIÓN NO DISPONIBLE':'CARGANDO '+p.name.toUpperCase(),0,-8);
 }
 ctx.restore();ctx.restore();
 ctx.save();ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.font='900 12px system-ui';ctx.fillStyle='#f1f4f3';ctx.shadowColor='#000';ctx.shadowBlur=7;ctx.fillText(f.name,f.x,f.y-size*1.04);ctx.shadowBlur=0;
