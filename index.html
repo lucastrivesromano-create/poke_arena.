@@ -20,6 +20,9 @@
 .fighter-art{display:block;width:100%;height:91px;object-fit:contain;object-position:center bottom;margin:1px auto 6px;filter:drop-shadow(0 8px 7px #0009);pointer-events:none}
 .fighter .type{z-index:1}.fighter b,.fighter small{z-index:1}
 @media(max-width:760px){.fighter{min-height:137px}.fighter-art{height:76px;margin-bottom:5px}}
+
+.arena-caption{align-items:center;flex-wrap:wrap}.fullscreen-btn{padding:6px 10px;font-size:8px;white-space:nowrap}.aim-settings{display:flex;align-items:center;gap:10px;margin-top:9px;padding:8px 10px;background:#101b25;border:1px solid #394f60;font-size:9px;letter-spacing:1px;color:#a9bac5}.aim-settings input{width:min(220px,42vw);accent-color:#dfbd78;touch-action:pan-y}.aim-settings b{min-width:36px;color:var(--gold);font-size:10px}#battle:fullscreen{width:100vw;height:100vh;overflow:auto;padding:12px;background:#080d15}#battle:fullscreen .arena-shell{height:min(62vh,760px);max-height:none}#battle:fullscreen .arena-caption{font-size:10px}#battle:fullscreen .control-row{margin-top:14px}#battle:fullscreen .battle-help{font-size:12px}
+@media(max-width:760px){.aim-settings{justify-content:center}.aim-settings input{width:44vw}.fullscreen-btn{font-size:7px;padding:6px 7px}#battle:fullscreen{padding:6px}#battle:fullscreen .arena-shell{height:58vh}}
 </style></head>
 <body><main class="app">
 <header class="header"><div><div class="brand">POKÉ <span>ARENA</span></div><div class="subtitle">CHAMPIONSHIP SERIES · 1V1</div></div><div class="season">SEASON 01 / ARENA CIRCUIT</div></header>
@@ -39,11 +42,11 @@
 <div class="scorebox"><div class="score" id="score">0 : 0</div><div class="roundtxt" id="roundLabel">RONDA 1 / 3</div><div class="roundtxt" id="clock">01:30</div></div>
 <div class="fighter-hud right"><b id="rightName">RIVAL</b><small id="rightPokemon">CHARIZARD</small><div class="health"><i id="rightHp"></i></div></div>
 </div>
-<div class="arena-shell"><canvas id="arena" width="1000" height="600"></canvas><div id="arena3d" aria-label="Estadio 3D"></div><div class="arena-caption"><span>CHAMPIONSHIP ARENA · INDOOR STADIUM</span><span id="netLabel">ARTWORK EDITION · P2P</span></div>
+<div class="arena-shell"><canvas id="arena" width="1000" height="600"></canvas><div id="arena3d" aria-label="Estadio 3D"></div><div class="arena-caption"><span>CHAMPIONSHIP ARENA · INDOOR STADIUM</span><span id="netLabel">3D ARENA</span><button id="fullBtn" class="btn fullscreen-btn" type="button">⛶ PANTALLA COMPLETA</button></div>
 <div id="overlay" class="overlay"><div class="overlay-card"><h2 id="overlayTitle">ROUND WIN</h2><p id="overlayText">La siguiente ronda comienza en breve.</p><button id="overlayBtn" class="btn gold">CONTINUAR</button></div></div></div>
 <div class="control-row"><div class="move-pad"><button class="padbtn pad-up" data-move="up">▲</button><button class="padbtn pad-left" data-move="left">◀</button><button class="padbtn pad-down" data-move="down">▼</button><button class="padbtn pad-right" data-move="right">▶</button></div>
 <div class="skills"><button id="qBtn" class="skillbtn"><strong>Q</strong><span id="qLabel">HABILIDAD</span></button><button id="eBtn" class="skillbtn"><strong>E</strong><span id="eLabel">ESQUIVA</span></button><button id="ultBtn" class="skillbtn ult"><strong>✦</strong><span id="ultLabel">SÚPER 0%</span></button><button id="fireBtn" class="skillbtn" style="border-color:#c28f54"><strong>●</strong><span>ATACAR</span></button></div></div>
-<div class="battle-help">PC: WASD o flechas para moverte · ratón para apuntar · clic o ESPACIO para atacar · Q habilidad · E esquiva · R súper. Móvil: cruceta, desliza sobre el estadio para apuntar y usa los botones.</div>
+<div class="aim-settings"><label for="aimSensitivity">SENSIBILIDAD DE GIRO</label><input id="aimSensitivity" type="range" min="0.2" max="1.2" step="0.05" value="0.4"><b id="sensitivityValue">40%</b></div><div class="battle-help">PC: WASD o flechas para moverte · ratón para apuntar · clic o ESPACIO para atacar · Q habilidad · E esquiva · R súper. Móvil: cruceta, desliza sobre el estadio para apuntar y usa los botones.</div>
 </section>
 </main>
 <script>
@@ -60,7 +63,7 @@ const P=[
 ];
 const pokemonArt={};
 P.forEach(p=>{const image=new Image();image.decoding='async';image.onload=()=>{p.artReady=true};image.onerror=()=>{p.artFailed=true;console.warn('No se pudo cargar artwork:',p.name,p.art)};image.src=p.art;pokemonArt[p.id]=image;});
-let selected=0,peer=null,conn=null,role='',room='',remoteInput={},localInput={dx:0,dy:0,ax:1,ay:0,fire:false,q:0,e:0,u:0},keys={},game=null,lastFrame=0,lastSend=0,lastNet=0,guestStarted=false,particles=[],damageTexts=[],effects=[],aim={x:760,y:300},camera2D={x:0,y:0},botDifficulty='normal',botThink=0,botStrafe=1,renderer3d=null,scene3d=null,camera3d=null,raycaster3d=null,groundPlane3d=null,model3d=[],shot3d=[],arenaResize=null;
+let selected=0,peer=null,conn=null,role='',room='',remoteInput={},aimSensitivity=.4,localInput={dx:0,dy:0,ax:1,ay:0,fire:false,q:0,e:0,u:0,sensitivity:.4},keys={},game=null,lastFrame=0,lastSend=0,lastNet=0,guestStarted=false,particles=[],damageTexts=[],effects=[],aim={x:760,y:300},camera2D={x:0,y:0},botDifficulty='normal',botThink=0,botStrafe=1,renderer3d=null,scene3d=null,camera3d=null,raycaster3d=null,groundPlane3d=null,model3d=[],shot3d=[],arenaResize=null;
 const randCode=()=>Math.random().toString(36).slice(2,10).toUpperCase().padEnd(8,'A');
 function setStatus(t){$('lobbyStatus').textContent=t}
 function show(id){document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));$(id).classList.add('active');if(id==='battle'&&renderer3d&&camera3d){const host=$('arena3d'),w=host.clientWidth,h=host.clientHeight;if(w&&h){renderer3d.setSize(w,h,false);camera3d.aspect=w/h;camera3d.updateProjectionMatrix()}}}
@@ -73,7 +76,7 @@ const dx=hero.x-bot.x,dy=hero.y-bot.y,dist=Math.hypot(dx,dy)||1,nx=dx/dist,ny=dy
 let dodge=false;if(cfg.dodge){for(const shot of game.projectiles){if(shot.owner!==0)continue;const rx=bot.x-shot.x,ry=bot.y-shot.y,vl=shot.vx*shot.vx+shot.vy*shot.vy||1;const q=Math.max(0,Math.min(.65,(rx*shot.vx+ry*shot.vy)/vl));const px=shot.x+shot.vx*q,py=shot.y+shot.vy*q;if(Math.hypot(bot.x-px,bot.y-py)<105){dodge=true;break}}}
 if(dodge){mx+=-ny*1.3;my+=nx*1.3}
 let q=remoteInput.q||0,e=remoteInput.e||0,u=remoteInput.u||0;if(bot.qcd<=0&&dist<520&&Math.random()<dt*cfg.skill*.8)q++;if(bot.ecd<=0&&(dist<145||dodge)&&Math.random()<dt*(botDifficulty==='hard'?2.2:1.1))e++;if(bot.charge>=100&&dist<480)u++;
-const spread=(1-cfg.accuracy)*(Math.random()-.5)*.35;remoteInput={dx:mx,dy:my,ax:dx+Math.cos(bot.face)*spread,ay:dy+Math.sin(bot.face)*spread,fire:dist<620,q:q,e:e,u:u};
+const spread=(1-cfg.accuracy)*(Math.random()-.5)*.35;remoteInput={dx:mx,dy:my,ax:dx+Math.cos(bot.face)*spread,ay:dy+Math.sin(bot.face)*spread,fire:dist<620,q:q,e:e,u:u,sensitivity:1.05};
 }
 function attachConnection(c){conn=c;c.on('open',()=>{if(role==='guest'){c.send({type:'hello',name:getName(),pokemon:P[selected].id})}});c.on('data',onNetwork);c.on('close',()=>{if(game&&role==='guest')$('netLabel').textContent='CONEXIÓN PERDIDA';if(role==='host'){remoteInput={dx:0,dy:0,ax:0,ay:0,fire:false,q:0,e:0,u:0};setStatus('El rival se ha desconectado.')}});c.on('error',e=>{if(role==='host')$('hostStatus').textContent='Error de conexión: '+e.type;else setStatus('No se pudo conectar. Comprueba el código e inténtalo otra vez.')})}
 function getName(){return ($('playerName').value.trim()||'PLAYER').slice(0,16)}
@@ -96,7 +99,7 @@ function updateHud(){if(!game)return;let a=game.p[0],b=game.p[1];$('leftName').t
 function broadcast(msg){if(conn&&conn.open)try{conn.send(msg)}catch(e){}}
 function localSide(){return role==='guest'?1:0}
 function setMove(name,v){keys[name]=v;calcInput()}
-function calcInput(){localInput.dx=(keys.right?1:0)-(keys.left?1:0);localInput.dy=(keys.down?1:0)-(keys.up?1:0);let side=localSide(),f=game&&game.p[side];if(f){localInput.ax=(aim.x-f.x);localInput.ay=(aim.y-f.y)}}
+function calcInput(){localInput.dx=(keys.right?1:0)-(keys.left?1:0);localInput.dy=(keys.down?1:0)-(keys.up?1:0);localInput.sensitivity=aimSensitivity;let side=localSide(),f=game&&game.p[side];if(f){localInput.ax=(aim.x-f.x);localInput.ay=(aim.y-f.y)}}
 function pulse(k){localInput[k]++}
 $('qBtn').onclick=()=>pulse('q');$('eBtn').onclick=()=>pulse('e');$('ultBtn').onclick=()=>pulse('u');
 const fire=$('fireBtn');fire.addEventListener('pointerdown',e=>{e.preventDefault();localInput.fire=true;try{fire.setPointerCapture(e.pointerId)}catch(_){} });['pointerup','pointercancel','lostpointercapture'].forEach(v=>fire.addEventListener(v,()=>localInput.fire=false));
@@ -108,6 +111,11 @@ canvas.addEventListener('pointerup',()=>{localInput.fire=false});window.addEvent
 window.addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();if(k==='w'||k==='arrowup')setMove('up',true);if(k==='s'||k==='arrowdown')setMove('down',true);if(k==='a'||k==='arrowleft')setMove('left',true);if(k==='d'||k==='arrowright')setMove('right',true);if(k===' '||k===' ')localInput.fire=true;if(k==='q')pulse('q');if(k==='e')pulse('e');if(k==='r')pulse('u')});
 window.addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='w'||k==='arrowup')setMove('up',false);if(k==='s'||k==='arrowdown')setMove('down',false);if(k==='a'||k==='arrowleft')setMove('left',false);if(k==='d'||k==='arrowright')setMove('right',false);if(k===' ')localInput.fire=false});
 window.addEventListener('blur',()=>{keys={};localInput.dx=localInput.dy=0;localInput.fire=false});
+try{const stored=Number(localStorage.getItem('pokeArenaAimSensitivity'));if(Number.isFinite(stored)&&stored>=.2&&stored<=1.2)aimSensitivity=stored}catch(e){}
+$('aimSensitivity').value=String(aimSensitivity);$('sensitivityValue').textContent=Math.round(aimSensitivity*100)+'%';
+$('aimSensitivity').addEventListener('input',e=>{aimSensitivity=Math.max(.2,Math.min(1.2,Number(e.target.value)||.4));$('sensitivityValue').textContent=Math.round(aimSensitivity*100)+'%';try{localStorage.setItem('pokeArenaAimSensitivity',String(aimSensitivity))}catch(err){}calcInput()});
+$('fullBtn').onclick=async()=>{try{if(document.fullscreenElement){await document.exitFullscreen()}else{const target=$('battle');if(target.requestFullscreen)await target.requestFullscreen();else $('netLabel').textContent='PANTALLA COMPLETA NO DISPONIBLE EN ESTE NAVEGADOR'}}catch(err){$('netLabel').textContent='EL NAVEGADOR NO PERMITE PANTALLA COMPLETA'}};
+document.addEventListener('fullscreenchange',()=>{$('fullBtn').textContent=document.fullscreenElement?'✕ SALIR DE PANTALLA COMPLETA':'⛶ PANTALLA COMPLETA'});
 function spawnParticle(x,y,color,n){for(let i=0;i<n;i++){let a=Math.random()*Math.PI*2,v=35+Math.random()*190;particles.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-20,life:.35+Math.random()*.55,max:.9,size:2+Math.random()*5,color:color})}}
 function textPop(x,y,t,color){damageTexts.push({x:x,y:y,text:t,life:.75,color:color})}
 function addEffect(x,y,type,life,color,angle){effects.push({x:x,y:y,type:type,life:life,max:life,color:color,angle:angle||0})}
@@ -118,7 +126,7 @@ function useE(f){let p=P.find(x=>x.id===f.id);if(f.ecd>0||f.dead)return;f.ecd=p.
 function useUlt(f){if(f.charge<100||f.dead)return;f.charge=0;let p=P.find(x=>x.id===f.id),enemy=game.p[1-f.side];let angle=f.face;if(f.id==='lucario'||f.id==='char'||f.id==='blastoise'){let range=f.id==='blastoise'?440:360;let dx=enemy.x-f.x,dy=enemy.y-f.y,along=dx*Math.cos(angle)+dy*Math.sin(angle);let perp=Math.abs(-dx*Math.sin(angle)+dy*Math.cos(angle));if(along>0&&along<range&&perp<90)damageFighter(enemy,f.id==='blastoise'?310:260,f,35,f.id==='char'?'fire':'energy');addEffect(f.x+Math.cos(angle)*155,f.y+Math.sin(angle)*120,'beam',.65,p.color,angle)}else{let d=Math.hypot(enemy.x-f.x,enemy.y-f.y);let rad=f.id==='venu'?205:170;if(d<rad)damageFighter(enemy,f.id==='venu'?275:f.id==='pika'?290:245,f,48,f.id);addEffect(f.x,f.y,'ultimate',.9,p.color)}f.attack=.5;addEffect(f.x,f.y,'ultimate',.8,p.color)}
 function processInput(f,inp,dt){if(f.dead)return;let p=P.find(x=>x.id===f.id);f.qcd=Math.max(0,f.qcd-dt);f.ecd=Math.max(0,f.ecd-dt);f.firecd=Math.max(0,f.firecd-dt);f.inv=Math.max(0,f.inv-dt);f.hurt=Math.max(0,f.hurt-dt);f.attack=Math.max(0,f.attack-dt);f.shield=Math.max(0,f.shield-dt*45);f.guard=Math.max(0,f.guard-dt);f.slow=Math.max(0,f.slow-dt);f.stun=Math.max(0,f.stun-dt);f.anim+=dt*7;
 let dx=inp.dx||0,dy=inp.dy||0,mag=Math.hypot(dx,dy);if(mag>1){dx/=mag;dy/=mag}
-let ax=inp.ax||0,ay=inp.ay||0;if(Math.hypot(ax,ay)>4)f.face=Math.atan2(ay,ax);
+let ax=inp.ax||0,ay=inp.ay||0;if(Math.hypot(ax,ay)>4){const targetAngle=Math.atan2(ay,ax),delta=Math.atan2(Math.sin(targetAngle-f.face),Math.cos(targetAngle-f.face));const sens=Number.isFinite(Number(inp.sensitivity))?Math.max(.2,Math.min(1.2,Number(inp.sensitivity))):aimSensitivity;const maxTurn=(1.4+sens*8)*dt;f.face+=Math.max(-maxTurn,Math.min(maxTurn,delta));}
 if(f.stun<=0){let speed=p.speed*(f.slow>0?.65:1);f.x+=dx*speed*dt;f.y+=dy*speed*dt*.78}
 f.x=Math.max(80,Math.min(W-80,f.x));f.y=Math.max(100,Math.min(H-100,f.y));if(mag>.1)f.move+=dt*12;
 if(inp.fire&&f.firecd<=0){shoot(f,f.face,1,f.id);f.firecd=p.rate;f.charge=Math.min(100,f.charge+5)}
@@ -229,7 +237,7 @@ renderer3d.domElement.addEventListener('pointermove',updateAimFromEvent);rendere
 }catch(err){console.warn('3D no disponible',err);if(renderer3d){renderer3d.dispose();renderer3d=null}scene3d=null;$('arena3d').style.display='none';canvas.style.display='block';return false}
 }
 function renderArena3D(t){
-const me=game.p[localSide()],wx=(me.x/W-.5)*60,wz=(me.y/H-.5)*36,ex=Math.cos(me.face),ez=Math.sin(me.face);camera3d.position.set(wx-ex*18,15.5,wz-ez*18);camera3d.lookAt(wx+ex*4,1.2,wz+ez*4);
+const me=game.p[localSide()],wx=(me.x/W-.5)*60,wz=(me.y/H-.5)*36;camera3d.position.set(wx,22,wz+25);camera3d.lookAt(wx,0,wz-1);
 game.p.forEach((f,i)=>{if(model3d[i].userData.id!==f.id){scene3d.remove(model3d[i]);model3d[i]=createPokemonModel(f.id);scene3d.add(model3d[i])}const m=model3d[i],x=(f.x/W-.5)*60,z=(f.y/H-.5)*36;m.position.set(x,0,z);m.rotation.y=Math.PI/2-f.face;m.rotation.z=f.dead>0?Math.min(1.2,f.dead*1.1):Math.sin(f.anim*.5)*.035+f.attack*1.1;m.visible=f.dead<1.2;const d=Math.min(1,Math.max(0,f.dead/1.05));m.scale.setScalar(1-d*.25+Math.sin(f.anim)*.012);m.userData.body.scale.y=m.userData.bodyBaseScale.y*(1+Math.sin(f.anim)*.025);if(m.userData.head)m.userData.head.rotation.x=Math.sin(f.anim*.6)*.025;m.userData.limbs.forEach((l,j)=>{l.rotation.x=Math.sin(f.anim*1.8+j*Math.PI)*.22+(f.attack>0?-.35:0)});m.userData.wings.forEach((w,j)=>{w.rotation.y=(j===0?-.2:.2)+Math.sin(t*8+j)*.18+(f.attack>0?.35:0)})});
 while(shot3d.length<game.projectiles.length){const mesh=new THREE.Mesh(new THREE.SphereGeometry(.34,12,10),new THREE.MeshStandardMaterial({color:0xffdf79,emissive:0x8e5d15,emissiveIntensity:1.6}));scene3d.add(mesh);shot3d.push(mesh)}shot3d.forEach((m,i)=>{const p=game.projectiles[i];m.visible=!!p;if(p){m.position.set((p.x/W-.5)*60,.95,(p.y/H-.5)*36);m.material.color.set(p.type==='fire'?0xff783b:p.type==='shadow'?0x9e70d0:p.type==='charged'?0x75c5ef:0xffe477)}});
 renderer3d.render(scene3d,camera3d);
