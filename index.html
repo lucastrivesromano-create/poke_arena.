@@ -60,13 +60,13 @@ function init(){updateWallet();drawModes();drawRoster();drawQuests();$('playNow'
 init();document.querySelectorAll('[data-screen]').forEach(b=>b.onclick=()=>show(b.dataset.screen));$('fightSelected').onclick=()=>startGame();
 const canvas=$('arena'),ctx=canvas.getContext('2d'),W=960,H=540;
 function makeFighter(p,sk,x,y,human){let lv=save.upgrades[p.id]||0;return {p,skin:sk,x,y,hp:Math.round(p.hp*(1+lv*.06)),max:Math.round(p.hp*(1+lv*.06)),damage:p.damage*(1+lv*.06),face:human?0:Math.PI,super:0,cd:0,inv:0,walk:0,human,speed:p.speed,slow:0,gadget:1,shield:0,attackAnim:0,score:0}}
-function startGame(nextRound=false){stopGame();if(mode==='duel'&&!nextRound)series={round:1,player:0,enemy:0};show('battle');let p=P[chosen];game={time:mode==='survival'?120:90,over:false,round:series?.round||1,player:makeFighter(p,skin,170,270,true),enemy:makeFighter(P[(chosen+2+Math.floor(Math.random()*4))%P.length],0,790,270,false),shots:[],particles:[],pickups:[],obstacles:mapFor(mode),last:performance.now(),kills:0};$('overlay').classList.remove('show');$('pname').textContent=p.name.toUpperCase();$('ename').textContent=game.enemy.p.name.toUpperCase();$('modeLabel').textContent=mode==='survival'?'SUPERVIVENCIA':mode==='training'?'ENTRENAMIENTO':`DUELOS · RONDA ${series.round}/3 · ${series.player}-${series.enemy}`;last=performance.now();raf=requestAnimationFrame(loop)}
+function startGame(nextRound=false){stopGame();if(mode==='duel'&&!nextRound)series={round:1,player:0,enemy:0};show('battle');let p=P[chosen];game={time:mode==='survival'?120:90,over:false,round:series?.round||1,player:makeFighter(p,skin,105,270,true),enemy:makeFighter(P[(chosen+2+Math.floor(Math.random()*4))%P.length],0,855,270,false),shots:[],particles:[],pickups:[],obstacles:mapFor(mode),last:performance.now(),kills:0};$('overlay').classList.remove('show');$('pname').textContent=p.name.toUpperCase();$('ename').textContent=game.enemy.p.name.toUpperCase();$('modeLabel').textContent=mode==='survival'?'SUPERVIVENCIA':mode==='training'?'ENTRENAMIENTO':`DUELOS · RONDA ${series.round}/3 · ${series.player}-${series.enemy}`;last=performance.now();raf=requestAnimationFrame(loop)}
 function mapFor(m){let a=m==='survival'?[{x:260,y:90,w:90,h:70},{x:590,y:95,w:100,h:65},{x:420,y:220,w:110,h:100},{x:230,y:390,w:100,h:60},{x:650,y:380,w:90,h:70}]:[{x:390,y:95,w:180,h:48},{x:390,y:397,w:180,h:48},{x:280,y:245,w:70,h:55},{x:610,y:245,w:70,h:55},{x:100,y:100,w:65,h:65},{x:795,y:375,w:65,h:65}];return a}
 function stopGame(){cancelAnimationFrame(raf);game=null}
 function loop(t){if(!game)return;let dt=Math.min((t-last)/16.67,2);last=t;update(dt);render();raf=requestAnimationFrame(loop)}
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function blocked(x,y,r){return game.obstacles.some(o=>x+r>o.x&&x-r<o.x+o.w&&y+r>o.y&&y-r<o.y+o.h)}
-function move(f,dx,dy,dt){let len=Math.hypot(dx,dy)||1;dx/=len;dy/=len;let sp=f.speed*(f.slow>0?.55:1)*dt,nx=Math.max(28,Math.min(W-28,f.x+dx*sp)),ny=Math.max(28,Math.min(H-28,f.y+dy*sp));if(!blocked(nx,f.y,20))f.x=nx;if(!blocked(f.x,ny,20))f.y=ny;if(dx||dy){f.face=Math.atan2(dy,dx);f.walk+=dt*.2}}
+function move(f,dx,dy,dt){let len=Math.hypot(dx,dy)||1;dx/=len;dy/=len;let sp=f.speed*(f.slow>0?.55:1)*dt,nx=Math.max(22,Math.min(W-22,f.x+dx*sp)),ny=Math.max(24,Math.min(H-24,f.y+dy*sp));if(!blocked(nx,f.y,20))f.x=nx;if(!blocked(f.x,ny,20))f.y=ny;if(dx||dy){f.face=Math.atan2(dy,dx);f.walk+=dt*.2}}
 function projectile(f,a,kind='normal',spread=0,damageOverride){let p=f.p,n=p.id==='blastoise'&&kind==='normal'?3:1;for(let i=0;i<n;i++){let ang=a+(i-(n-1)/2)*spread,speed=p.id==='pika'?8.4:p.id==='lucario'?8:p.id==='char'?6:7;game.shots.push({x:f.x+Math.cos(ang)*23,y:f.y+Math.sin(ang)*23,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,owner:f,kind,id:p.id,damage:damageOverride||f.damage*(kind==='super'?2.2:1),life:kind==='super'?78:62,r:kind==='super'?13:p.id==='char'?11:8,hit:[]})}}
 function attack(f,a){if(f.cd>0||game.over)return;f.cd=f.p.rate/16.67;f.attackAnim=13;projectile(f,a,'normal',f.p.id==='blastoise'?.2:0);let s=game.shots.at(-1);if(f.p.id==='venu')s.kind='seed';if(f.p.id==='gengar')s.kind='shadow'}
 function particle(x,y,color,r=3){game.particles.push({x,y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,life:26,color,r})}
@@ -116,32 +116,24 @@ function rounded(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundR
 function render(){
 let g=game;if(!g)return;
 ctx.clearRect(0,0,W,H);
-// GRAN ESTADIO DE COMBATE: recinto inspirado en los torneos de la serie
-let bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#15233c');bg.addColorStop(.55,'#273b4b');bg.addColorStop(1,'#101b2e');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-// Gradas escalonadas con público y focos
-for(let band=0;band<4;band++){let yy=band*12;ctx.fillStyle=['#34465c','#536174','#26374d','#17283c'][band];ctx.fillRect(0,yy,W,12);ctx.fillRect(0,H-12-yy,W,12)}
-for(let y=5;y<49;y+=9){for(let x=12;x<W-12;x+=13){let n=(x*7+y*11)%9;ctx.fillStyle=['#f0c76b','#e98d80','#8fc9d5','#e8e7d5','#8eb18a','#b5a0dc','#e6a5c0'][n%7];ctx.beginPath();ctx.arc(x,y+2,2.7,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x,H-y-2,2.7,0,Math.PI*2);ctx.fill()}}
-for(let x=70;x<W;x+=205){ctx.fillStyle='#dce8f5';ctx.fillRect(x,47,5,12);ctx.fillStyle='#fff5ce';ctx.shadowBlur=18;ctx.shadowColor='#fff1b0';ctx.beginPath();ctx.arc(x+2,61,5,0,7);ctx.fill();ctx.shadowBlur=0}
-// Estructura y pantallas del estadio
-ctx.fillStyle='#0d1728';ctx.fillRect(0,48,W,12);ctx.fillRect(0,H-60,W,12);
-rounded(380,5,200,35,9,'#101b31');ctx.strokeStyle='#d5b968';ctx.lineWidth=2;ctx.strokeRect(380,5,200,35);ctx.fillStyle='#ffe58b';ctx.font='900 15px system-ui';ctx.textAlign='center';ctx.fillText('POKÉMON LEAGUE',480,27);
-ctx.fillStyle='#17263b';ctx.fillRect(38,60,W-76,H-120);
-// Suelo profesional de combate: anillos concéntricos y sectores
-let floor=ctx.createRadialGradient(480,270,30,480,270,440);floor.addColorStop(0,'#a6b6a1');floor.addColorStop(.55,'#718b7c');floor.addColorStop(1,'#405c58');ctx.fillStyle=floor;ctx.fillRect(38,60,W-76,H-120);
-for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#ffffff09':'#122e3210';ctx.fillRect(40,60+i*35,W-80,35)}
-// Perspectiva 3D cenital: losetas, profundidad y borde elevado
-for(let row=0;row<9;row++){let yy=82+row*45;ctx.strokeStyle='#d8e7d522';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(62,yy);ctx.lineTo(898,yy);ctx.stroke()}
-for(let col=0;col<17;col++){let xx=62+col*52;ctx.strokeStyle='#d8e7d51b';ctx.beginPath();ctx.moveTo(xx,80);ctx.lineTo(xx,460);ctx.stroke()}
-let rim=ctx.createLinearGradient(0,70,0,480);rim.addColorStop(0,'#e9dfbd');rim.addColorStop(.45,'#8d9f91');rim.addColorStop(1,'#344d50');ctx.strokeStyle=rim;ctx.lineWidth=24;ctx.strokeRect(53,74,W-106,H-148);ctx.strokeStyle='#24364a';ctx.lineWidth=4;ctx.strokeRect(64,85,W-128,H-170);
-ctx.fillStyle='#ffffff18';ctx.fillRect(66,86,828,5);ctx.fillStyle='#101e2b66';ctx.fillRect(66,449,828,7);
-// Marcas de competición y círculo central
-ctx.strokeStyle='#f6edcf';ctx.lineWidth=4;ctx.beginPath();ctx.arc(480,270,112,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(480,86);ctx.lineTo(480,454);ctx.stroke();ctx.strokeRect(80,155,100,230);ctx.strokeRect(780,155,100,230);
-ctx.fillStyle='#f4e8c5';ctx.beginPath();ctx.arc(480,270,8,0,7);ctx.fill();
-// Gran emblema Poké Ball incrustado en el suelo
-ctx.save();ctx.translate(480,270);ctx.globalAlpha=.32;ctx.fillStyle='#e9e4ce';ctx.beginPath();ctx.arc(0,0,65,Math.PI,0);ctx.fill();ctx.fillStyle='#b85c56';ctx.beginPath();ctx.arc(0,0,65,Math.PI,0);ctx.fill();ctx.fillStyle='#e9e4ce';ctx.fillRect(-65,-3,130,6);ctx.strokeStyle='#e9e4ce';ctx.lineWidth=7;ctx.beginPath();ctx.arc(0,0,65,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#e9e4ce';ctx.beginPath();ctx.arc(0,0,17,0,7);ctx.fill();ctx.fillStyle='#49665f';ctx.beginPath();ctx.arc(0,0,9,0,7);ctx.fill();ctx.restore();
-// Columnas, paneles LED y puertas de entrada de entrenadores
-for(let side=0;side<2;side++){let x=side?14:W-25;ctx.fillStyle='#273b53';ctx.fillRect(x,125,11,290);ctx.fillStyle=side?'#4aa3d5':'#d96d61';ctx.fillRect(x,165,11,75);ctx.fillRect(x,300,11,75)}
-for(let side=0;side<2;side++){let x=side?75:885;ctx.fillStyle='#14253a';ctx.fillRect(x-24,245,48,56);ctx.strokeStyle=side?'#64c5ec':'#f08b79';ctx.lineWidth=3;ctx.strokeRect(x-24,245,48,56);ctx.fillStyle='#f8e6b6';ctx.font='900 10px system-ui';ctx.textAlign='center';ctx.fillText(side?'AZUL':'ROJO',x,278)}
+// ARENA AMPLIADA: casi toda la pantalla es superficie jugable
+let bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#172b3b');bg.addColorStop(.5,'#263f49');bg.addColorStop(1,'#0c1d2b');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+// Gradas compactas: dejan mucho más espacio al campo
+for(let band=0;band<2;band++){let yy=band*9;ctx.fillStyle=['#43566a','#1b2b40'][band];ctx.fillRect(0,yy,W,9);ctx.fillRect(0,H-9-yy,W,9)}
+for(let y=3;y<17;y+=7){for(let x=10;x<W-10;x+=18){ctx.fillStyle=['#f0c76b','#e98d80','#8fc9d5','#e8e7d5','#8eb18a'][Math.floor((x*7+y*11)%5)];ctx.beginPath();ctx.arc(x,y+2,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x,H-y-2,2,0,Math.PI*2);ctx.fill()}}
+let floor=ctx.createLinearGradient(0,12,0,H-12);floor.addColorStop(0,'#9eb7a4');floor.addColorStop(.48,'#688b7c');floor.addColorStop(1,'#304f50');ctx.fillStyle=floor;ctx.fillRect(14,16,W-28,H-32);
+// Baldosas grandes con perspectiva cenital y reflejos
+for(let row=0;row<12;row++){let yy=20+row*44;ctx.fillStyle=row%2?'#ffffff08':'#102f3210';ctx.fillRect(16,yy,W-32,44);ctx.strokeStyle='#e6f2dc28';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(18,yy);ctx.lineTo(W-18,yy);ctx.stroke()}
+for(let col=0;col<20;col++){let xx=18+col*49;ctx.strokeStyle='#e6f2dc20';ctx.beginPath();ctx.moveTo(xx,18);ctx.lineTo(xx,H-18);ctx.stroke()}
+// Borde elevado con cara frontal oscura, bisel y luz superior
+ctx.fillStyle='#142d36';ctx.fillRect(14,H-25,W-28,11);ctx.fillStyle='#d4d7b5';ctx.fillRect(14,14,W-28,7);ctx.fillRect(14,14,7,H-28);ctx.fillRect(W-21,14,7,H-28);ctx.fillStyle='#718d80';ctx.fillRect(21,21,W-42,5);ctx.fillRect(21,21,5,H-42);ctx.fillStyle='#263e43';ctx.fillRect(21,H-25,W-42,5);
+// Marcas de combate a escala del nuevo campo
+ctx.strokeStyle='#f3ecd0aa';ctx.lineWidth=3;ctx.beginPath();ctx.arc(480,270,126,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(480,24);ctx.lineTo(480,H-24);ctx.stroke();ctx.strokeRect(34,145,120,250);ctx.strokeRect(806,145,120,250);
+ctx.fillStyle='#f4e8c5';ctx.beginPath();ctx.arc(480,270,8,0,Math.PI*2);ctx.fill();
+// Gran símbolo central integrado en el suelo
+ctx.save();ctx.translate(480,270);ctx.globalAlpha=.24;ctx.fillStyle='#e9e4ce';ctx.beginPath();ctx.arc(0,0,72,Math.PI,0);ctx.fill();ctx.fillStyle='#b85c56';ctx.beginPath();ctx.arc(0,0,72,0,Math.PI);ctx.fill();ctx.fillStyle='#e9e4ce';ctx.fillRect(-72,-3,144,6);ctx.strokeStyle='#e9e4ce';ctx.lineWidth=7;ctx.beginPath();ctx.arc(0,0,72,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(0,0,18,0,Math.PI*2);ctx.fill();ctx.restore();
+// Focos proyectados sobre el terreno
+for(let x=90;x<W;x+=195){let glow=ctx.createRadialGradient(x,28,2,x,28,105);glow.addColorStop(0,'#fff5c52b');glow.addColorStop(1,'#fff5c500');ctx.fillStyle=glow;ctx.fillRect(x-105,18,210,H-36)}
 // Obstáculos elevados: bloques de roca de gimnasio con volumen
 for(const o of g.obstacles){ctx.fillStyle='#07151c99';ctx.beginPath();ctx.ellipse(o.x+o.w/2+5,o.y+o.h/2+22,o.w*.7,o.h*.55,0,0,7);ctx.fill();
 // Cara lateral visible para simular altura
@@ -163,12 +155,12 @@ for(const q of g.particles){ctx.globalAlpha=Math.max(0,q.life/30);ctx.fillStyle=
 }function drawFighter(f){
 const p=f.p, skin=p.skins[f.skin], main=skin[1], shade=skin[2], hit=f.inv>0&&Math.floor(f.inv)%2===0;
 const color=p.id==='pika'?'#ffe15a':p.id==='char'?'#ef7a3b':p.id==='blastoise'?'#63b6df':p.id==='venu'?'#6eaf5b':p.id==='gengar'?'#8061b0':'#477fc5';
-ctx.save();ctx.translate(f.x,f.y+Math.sin(f.walk)*2);ctx.rotate(Math.sin(f.walk*1.7)*.045);ctx.globalAlpha=hit?.45:1;
+ctx.save();ctx.translate(f.x,f.y+Math.sin(f.walk)*2);ctx.scale(1.38,1.38);ctx.rotate(Math.sin(f.walk*1.7)*.045);ctx.globalAlpha=hit?.45:1;
 ctx.save();ctx.filter='blur(7px)';ctx.fillStyle='#07131c99';ctx.beginPath();ctx.ellipse(4,24,35,17,0,0,Math.PI*2);ctx.fill();ctx.restore();
 if(f.shield>0){ctx.strokeStyle='#8defff';ctx.lineWidth=4;ctx.shadowColor='#65dfff';ctx.shadowBlur=20;ctx.beginPath();ctx.arc(0,0,42,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0}
 ctx.globalAlpha*=.13;ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(0,0,43,39,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=hit?.45:1;
 // Volumen 3D: cuerpo elevado, sombreado especular y volumen inferior
-ctx.save();ctx.translate(0,9);ctx.fillStyle='#101b2699';ctx.beginPath();ctx.ellipse(0,9,27,22,0,0,Math.PI*2);ctx.fill();ctx.restore();
+ctx.save();ctx.translate(0,13);for(let z=12;z>=1;z--){ctx.fillStyle='rgba(8,20,30,'+(0.035+z*.009)+')';ctx.beginPath();ctx.ellipse(0,z,27,23,0,0,Math.PI*2);ctx.fill()}ctx.fillStyle='#101b26bb';ctx.beginPath();ctx.ellipse(3,15,28,22,0,0,Math.PI*2);ctx.fill();ctx.restore();
 const grad=ctx.createRadialGradient(-15,-19,1,2,7,43);grad.addColorStop(0,'#ffffff');grad.addColorStop(.12,'#fff8df');grad.addColorStop(.34,main);grad.addColorStop(.78,shade);grad.addColorStop(1,'#17242b');
 function blob(x,y,rx,ry,c){ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill()}
 function stroke(points,c,w){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.stroke()}
