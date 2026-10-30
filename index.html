@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#080d15"><title>Poké Arena Championship</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
-<script src="./three.min.js"></script>
+<script src="./three.min.js?v=27" onload="document.documentElement.dataset.threeEngine='loaded'" onerror="document.documentElement.dataset.threeEngine='failed'"></script>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js'"></script>
 
 <style>
@@ -203,7 +203,7 @@ const bw=56,bh=7;pathRound(f.x-bw/2,f.y-size*.96,bw,bh,4);ctx.fillStyle='#0a1119
 function drawProjectile(s){ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.angle);let col=s.type==='fire'?'#ff9957':s.type==='shadow'?'#b18bdd':s.type==='charged'?'#8fc9ef':s.type==='triple'?'#83d9ed':s.type==='electric'?'#fff09c':s.type==='roots'?'#9bcc75':'#c3e5f2';ctx.globalAlpha=.25;ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(-15,0,24,9,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;let grad=ctx.createRadialGradient(-3,-4,1,0,0,s.r*1.6);grad.addColorStop(0,'#fff');grad.addColorStop(.3,col);grad.addColorStop(1,s.type==='fire'?'#a93427':'#253b54');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(0,0,s.r,0,Math.PI*2);ctx.fill();ctx.restore()}
 function drawEffects(){effects.forEach(e=>{let a=e.life/e.max,progress=1-a;ctx.save();ctx.globalAlpha=a;ctx.strokeStyle=e.color;ctx.lineWidth=e.type==='beam'?22:4;ctx.shadowColor=e.color;ctx.shadowBlur=18;ctx.beginPath();if(e.type==='beam'){ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+Math.cos(e.angle)*400,e.y+Math.sin(e.angle)*300)}else{let r=e.type==='death'?20+progress*80:e.type==='dash'?20+progress*45:30+progress*100;ctx.ellipse(e.x,e.y,r,r*.58,0,0,Math.PI*2)}ctx.stroke();ctx.restore()})}
 function getCamera2D(){if(!game)return{x:0,y:0};const f=game.p[localSide()];return{x:Math.max(0,Math.min(W-VIEW_W,f.x-VIEW_W/2)),y:Math.max(0,Math.min(H-VIEW_H,f.y-VIEW_H/2))}}
-function draw(){let t=performance.now()/1000;if(renderer3d&&scene3d&&game){try{renderArena3D(t);return}catch(err){console.error('Error renderizando 3D; cambio a modo compatible',err);try{renderer3d.dispose()}catch(e){}renderer3d=null;scene3d=null;$('arena3d').style.display='none';canvas.style.display='block';$('netLabel').textContent='MODO 2D · '+String(err.message||err).slice(0,46)}}const cam=getCamera2D();camera2D=cam;ctx.clearRect(0,0,1000,600);ctx.save();ctx.translate(-cam.x,-cam.y);drawStadium(t);if(game){drawEffects();game.projectiles.forEach(drawProjectile);game.p.forEach(f=>drawActor(f,t));particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/.9);ellipse(p.x,p.y,p.size,p.size,p.color);ctx.globalAlpha=1});damageTexts.forEach(x=>{ctx.globalAlpha=Math.min(1,x.life*2);ctx.textAlign='center';ctx.font='bold 18px system-ui';ctx.fillStyle=x.color;ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillText(x.text,x.x,x.y);ctx.shadowBlur=0;ctx.globalAlpha=1})}ctx.restore()}
+function draw(){let t=performance.now()/1000;if(renderer3d&&scene3d&&game){try{renderArena3D(t);return}catch(err){console.error('Error renderizando 3D; cambio a modo compatible',err);try{renderer3d.dispose()}catch(e){}renderer3d=null;scene3d=null;$('arena3d').style.display='none';canvas.style.display='block';$('netLabel').textContent='ERROR 3D: '+String(err.message||err).slice(0,50)}}const cam=getCamera2D();camera2D=cam;ctx.clearRect(0,0,1000,600);ctx.save();ctx.translate(-cam.x,-cam.y);drawStadium(t);if(game){drawEffects();game.projectiles.forEach(drawProjectile);game.p.forEach(f=>drawActor(f,t));particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/.9);ellipse(p.x,p.y,p.size,p.size,p.color);ctx.globalAlpha=1});damageTexts.forEach(x=>{ctx.globalAlpha=Math.min(1,x.life*2);ctx.textAlign='center';ctx.font='bold 18px system-ui';ctx.fillStyle=x.color;ctx.shadowColor='#000';ctx.shadowBlur=5;ctx.fillText(x.text,x.x,x.y);ctx.shadowBlur=0;ctx.globalAlpha=1})}ctx.restore()}
 function frame(now){let dt=Math.min(.035,(now-lastFrame)/1000||0);lastFrame=now;if(game&&(role==='host'||role==='bot')){if(role==='bot')thinkBot(dt);simulate(dt);if(role==='host'&&now-lastSend>70){broadcast({type:'state',game:game});lastSend=now}if(now-lastSend>70||role==='bot'){updateHud();if(game.phase==='finished')showOverlay(game.winner===0?'¡VICTORIA!':'DERROTA',game.p[game.winner].trainer+' gana '+game.scores[0]+' : '+game.scores[1]+'.',true);else if(game.phase==='intermission'&&!$('overlay').classList.contains('show'))showOverlay('RONDA COMPLETADA','La siguiente ronda comienza en breve.',false);else if(game.phase==='playing'&&role==='bot')hideOverlay()}}else if(game&&role==='guest'&&conn&&conn.open){if(localInput.turn){const turnRate=(.10+aimSensitivity*1.15)*dt;aimAngle+=localInput.turn*turnRate;aimAngle=Math.atan2(Math.sin(aimAngle),Math.cos(aimAngle));cameraYaw=aimAngle;localInput.ax=Math.cos(aimAngle)*1000;localInput.ay=Math.sin(aimAngle)*1000}if(now-lastNet>50){broadcast({type:'input',input:localInput});lastNet=now;updateHudTimer()}}draw();requestAnimationFrame(frame)}
 
 
@@ -341,7 +341,7 @@ for(let x of [-31,31]){const rail=new THREE.Mesh(new THREE.BoxGeometry(.42,.22,3
 for(let x=-24;x<=24;x+=12){const beam=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,25,10),steel);beam.position.set(x,14.5,-19.2);beam.castShadow=true;stadiumRoot3d.add(beam);const lamp=new THREE.Mesh(new THREE.BoxGeometry(2.8,.22,1.15),darkSteel);lamp.position.set(x,26,-9);stadiumRoot3d.add(lamp);const glow=new THREE.Mesh(new THREE.BoxGeometry(2.3,.08,.8),new THREE.MeshBasicMaterial({color:0xfff0cf}));glow.position.set(x,25.86,-9);stadiumRoot3d.add(glow);const spot=new THREE.SpotLight(0xffedcf,95,48,Math.PI/5,.55,1.3);spot.position.set(x,25,-9);spot.target.position.set(x*.3,0,0);spot.castShadow=x===0;spot.shadow.mapSize.set(512,512);stadiumRoot3d.add(spot,spot.target)}
 const board=new THREE.Mesh(new THREE.BoxGeometry(14,2.8,.55),darkSteel);board.position.set(0,10,-19.1);stadiumRoot3d.add(board);const boardFace=new THREE.Mesh(new THREE.BoxGeometry(13.6,2.35,.06),new THREE.MeshBasicMaterial({color:0x102b3b}));boardFace.position.set(0,10,-18.78);stadiumRoot3d.add(boardFace);const boardAccent=new THREE.Mesh(new THREE.BoxGeometry(8,.09,.08),new THREE.MeshBasicMaterial({color:0xdcb66d}));boardAccent.position.set(0,9,-18.72);stadiumRoot3d.add(boardAccent);
 
-model3d=[createPokemonModel('pika'),createPokemonModel('char')];model3d.forEach(m=>stadiumRoot3d.add(m));raycaster3d=new THREE.Raycaster();groundPlane3d=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+model3d=[createPokemonModel('pika'),createPokemonModel('char')];model3d.forEach(m=>scene3d.add(m));raycaster3d=new THREE.Raycaster();groundPlane3d=new THREE.Plane(new THREE.Vector3(0,1,0),0);
 const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer3d.setSize(w,h,false);camera3d.aspect=w/h;camera3d.updateProjectionMatrix()};arenaResize=new ResizeObserver(resize);arenaResize.observe(host);resize();
 renderer3d.domElement.addEventListener('pointerdown',beginAimDrag);renderer3d.domElement.addEventListener('pointermove',updateAimFromEvent);renderer3d.domElement.addEventListener('pointerup',endAimDrag);renderer3d.domElement.addEventListener('pointercancel',endAimDrag);renderer3d.domElement.addEventListener('lostpointercapture',endAimDrag);return true;
 }catch(err){console.warn('3D no disponible',err);if(renderer3d){renderer3d.dispose();renderer3d=null}scene3d=null;stadiumRoot3d=null;$('arena3d').style.display='none';canvas.style.display='block';$('netLabel').textContent='ERROR AL INICIAR 3D · '+String(err.message||err).slice(0,44);return false}
@@ -363,14 +363,14 @@ return new Promise((resolve,reject)=>{const el=document.createElement('script');
 }
 async function bootThreeArena(){
 if(!window.THREE){
-$('netLabel').textContent='CARGANDO MOTOR 3D…';
+$('netLabel').textContent='CARGANDO MOTOR 3D LOCAL…';
 const cdns=['https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js','https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js','https://unpkg.com/three@0.160.0/build/three.min.js'];
 for(const src of cdns){if(window.THREE)break;try{await loadThreeScript(src)}catch(err){console.warn(err)}}
 }
 if(window.THREE){
-try{if(initArena3D()){ $('netLabel').textContent='ESTADIO 3D · CARGANDO MODELOS';loadDetailedPokemonModels()}}
-catch(err){console.error(err);$('netLabel').textContent='ERROR MOTOR 3D · MODO COMPATIBLE'}
-}else{$('netLabel').textContent='MOTOR 3D NO DISPONIBLE · MODO COMPATIBLE'}
+try{if(initArena3D()){ $('netLabel').textContent='3D ACTIVO · CARGANDO POKÉMON';loadDetailedPokemonModels()}}
+catch(err){console.error(err);$('netLabel').textContent='ERROR INICIANDO 3D: '+String(err.message||err).slice(0,42)}
+}else{$('netLabel').textContent='3D NO DISPONIBLE · '+(document.documentElement.dataset.threeEngine||'SIN MOTOR')}
 }
 bootThreeArena();
 
