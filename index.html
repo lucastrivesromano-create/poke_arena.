@@ -13,6 +13,12 @@
 .control-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}.move-pad{display:grid;grid-template-columns:36px 36px 36px;grid-template-rows:36px 36px 36px;gap:3px}.padbtn,.skillbtn{touch-action:none;user-select:none;background:linear-gradient(145deg,#2b4051,#14232f);border:1px solid #62798a;border-radius:3px;color:#f0f2f2}.padbtn{font-size:16px}.pad-up{grid-column:2}.pad-left{grid-column:1;grid-row:2}.pad-down{grid-column:2;grid-row:2}.pad-right{grid-column:3;grid-row:2}.skills{display:flex;gap:6px;align-items:center}.skillbtn{height:54px;min-width:62px;padding:4px;font-size:8px;font-weight:950;letter-spacing:.5px}.skillbtn strong{display:block;color:var(--gold);font-size:17px;margin-bottom:2px}.skillbtn.ult{background:linear-gradient(145deg,#4a3659,#211b2c);border-color:#9778ad}.skillbtn:active,.padbtn:active{filter:brightness(1.4);transform:scale(.96)}.battle-help{font-size:10px;line-height:1.5;color:#8da0ae;margin-top:9px}
 @media(max-width:760px){body{padding:7px}.layout{grid-template-columns:1fr}.panel{padding:12px}.header{margin-bottom:10px}.fighter-grid{gap:6px}.fighter{min-height:95px;padding:8px}.fighter .sigil{font-size:27px}.fighter b{font-size:10px}.match-top{gap:4px}.fighter-hud{padding:7px}.fighter-hud b{font-size:9px}.scorebox{min-width:70px}.score{font-size:18px}.roundtxt{font-size:7px}.control-row{align-items:flex-end}.move-pad{grid-template-columns:32px 32px 32px;grid-template-rows:32px 32px 32px}.skillbtn{min-width:48px;height:49px;font-size:7px}.skillbtn strong{font-size:15px}.arena-caption{font-size:7px}}
 @media(max-width:390px){.fighter-grid{grid-template-columns:repeat(2,1fr)}.skillbtn{min-width:43px}.move-pad{grid-template-columns:29px 29px 29px;grid-template-rows:29px 29px 29px}}
+
+/* Official Pokémon artwork replaces the placeholder drawings */
+.fighter{min-height:156px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;overflow:hidden}
+.fighter-art{display:block;width:100%;height:91px;object-fit:contain;object-position:center bottom;margin:1px auto 6px;filter:drop-shadow(0 8px 7px #0009);pointer-events:none}
+.fighter .type{z-index:1}.fighter b,.fighter small{z-index:1}
+@media(max-width:760px){.fighter{min-height:137px}.fighter-art{height:76px;margin-bottom:5px}}
 </style></head>
 <body><main class="app">
 <header class="header"><div><div class="brand">POKÉ <span>ARENA</span></div><div class="subtitle">CHAMPIONSHIP SERIES · 1V1</div></div><div class="season">SEASON 01 / ARENA CIRCUIT</div></header>
@@ -44,18 +50,20 @@
 'use strict';
 const $=id=>document.getElementById(id), canvas=$('arena'),ctx=canvas.getContext('2d'),W=1000,H=600;
 const P=[
-{id:'pika',name:'Pikachu',emoji:'⚡',role:'VELOCISTA',color:'#e9bd3c',dark:'#a97728',hp:1000,speed:235,damage:78,rate:.48,q:'RAYO CARGADO',e:'IMPULSO',ult:'TRUENO',qcd:5,ecd:7,ucd:0,desc:'Rápido y agresivo. Su impulso eléctrico permite entrar y salir del rango.'},
-{id:'char',name:'Charizard',emoji:'🔥',role:'ARTILLERO',color:'#df713d',dark:'#843b36',hp:1100,speed:190,damage:98,rate:.72,q:'LLAMA EXPLOSIVA',e:'VUELO RASANTE',ult:'METEORO',qcd:6,ecd:8,desc:'Ataques pesados y buen alcance. Castiga los errores de posicionamiento.'},
-{id:'blastoise',name:'Blastoise',emoji:'💧',role:'TANQUE',color:'#4a9fc5',dark:'#285875',hp:1350,speed:165,damage:72,rate:.62,q:'DOBLE CAÑÓN',e:'CAPARAZÓN',ult:'HIDROCAÑÓN',qcd:6,ecd:9,desc:'Resistente y constante. Puede aguantar presión y responder con potencia.'},
-{id:'venu',name:'Venusaur',emoji:'🌿',role:'CONTROL',color:'#6b9d57',dark:'#365b43',hp:1150,speed:175,damage:84,rate:.67,q:'RAÍCES',e:'POLEN VITAL',ult:'TORMENTA FLORAL',qcd:7,ecd:10,desc:'Controla el espacio con semillas y puede recuperar parte de su salud.'},
-{id:'gengar',name:'Gengar',emoji:'👻',role:'ASESINO',color:'#8062a6',dark:'#43335f',hp:940,speed:215,damage:88,rate:.57,q:'BOLA SOMBRA',e:'FASE UMBRÍA',ult:'PESADILLA',qcd:5,ecd:8,desc:'Difícil de atrapar. Su fase umbría reposiciona al luchador.'},
-{id:'lucario',name:'Lucario',emoji:'🔵',role:'TÉCNICO',color:'#477eaa',dark:'#29475f',hp:1050,speed:200,damage:91,rate:.58,q:'AURA CARGADA',e:'CONTRAATAQUE',ult:'PULSO AURA',qcd:6,ecd:8,desc:'Equilibrado y preciso. Premia los impactos bien apuntados.'}
+{id:'pika',dex:25,art:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',name:'Pikachu',emoji:'⚡',role:'VELOCISTA',color:'#e9bd3c',dark:'#a97728',hp:1000,speed:235,damage:78,rate:.48,q:'RAYO CARGADO',e:'IMPULSO',ult:'TRUENO',qcd:5,ecd:7,ucd:0,desc:'Rápido y agresivo. Su impulso eléctrico permite entrar y salir del rango.'},
+{id:'char',dex:6,art:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png',name:'Charizard',emoji:'🔥',role:'ARTILLERO',color:'#df713d',dark:'#843b36',hp:1100,speed:190,damage:98,rate:.72,q:'LLAMA EXPLOSIVA',e:'VUELO RASANTE',ult:'METEORO',qcd:6,ecd:8,desc:'Ataques pesados y buen alcance. Castiga los errores de posicionamiento.'},
+{id:'blastoise',dex:9,art:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png',name:'Blastoise',emoji:'💧',role:'TANQUE',color:'#4a9fc5',dark:'#285875',hp:1350,speed:165,damage:72,rate:.62,q:'DOBLE CAÑÓN',e:'CAPARAZÓN',ult:'HIDROCAÑÓN',qcd:6,ecd:9,desc:'Resistente y constante. Puede aguantar presión y responder con potencia.'},
+{id:'venu',dex:3,art:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png',name:'Venusaur',emoji:'🌿',role:'CONTROL',color:'#6b9d57',dark:'#365b43',hp:1150,speed:175,damage:84,rate:.67,q:'RAÍCES',e:'POLEN VITAL',ult:'TORMENTA FLORAL',qcd:7,ecd:10,desc:'Controla el espacio con semillas y puede recuperar parte de su salud.'},
+{id:'gengar',dex:94,art:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png',name:'Gengar',emoji:'👻',role:'ASESINO',color:'#8062a6',dark:'#43335f',hp:940,speed:215,damage:88,rate:.57,q:'BOLA SOMBRA',e:'FASE UMBRÍA',ult:'PESADILLA',qcd:5,ecd:8,desc:'Difícil de atrapar. Su fase umbría reposiciona al luchador.'},
+{id:'lucario',dex:448,art:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/448.png',name:'Lucario',emoji:'🔵',role:'TÉCNICO',color:'#477eaa',dark:'#29475f',hp:1050,speed:200,damage:91,rate:.58,q:'AURA CARGADA',e:'CONTRAATAQUE',ult:'PULSO AURA',qcd:6,ecd:8,desc:'Equilibrado y preciso. Premia los impactos bien apuntados.'}
 ];
+const pokemonArt={};
+P.forEach(p=>{const image=new Image();image.crossOrigin='anonymous';image.decoding='async';image.onload=()=>{p.artReady=true};image.onerror=()=>{p.artFailed=true};image.src=p.art;pokemonArt[p.id]=image;});
 let selected=0,peer=null,conn=null,role='',room='',remoteInput={},localInput={dx:0,dy:0,ax:1,ay:0,fire:false,q:0,e:0,u:0},keys={},game=null,lastFrame=0,lastSend=0,lastNet=0,guestStarted=false,particles=[],damageTexts=[],effects=[],aim={x:760,y:300};
 const randCode=()=>Math.random().toString(36).slice(2,10).toUpperCase().padEnd(8,'A');
 function setStatus(t){$('lobbyStatus').textContent=t}
 function show(id){document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));$(id).classList.add('active')}
-function drawFighters(){$('fighters').innerHTML=P.map((p,i)=>'<button class="fighter '+(i===selected?'selected':'')+'" data-f="'+i+'"><span class="type">'+p.role+'</span><span class="sigil">'+p.emoji+'</span><b>'+p.name+'</b><small>'+p.hp+' HP · '+p.speed+' VEL.</small></button>').join('');$('fighters').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{selected=+b.dataset.f;drawFighters();$('selectedStat').textContent=P[selected].name.toUpperCase()+' · '+P[selected].role});let p=P[selected];$('selectedDescription').textContent=p.desc+'  ·  Q: '+p.q+'  ·  E: '+p.e+'  ·  SÚPER: '+p.ult}
+function drawFighters(){$('fighters').innerHTML=P.map((p,i)=>'<button class="fighter '+(i===selected?'selected':'')+'" data-f="'+i+'"><span class="type">'+p.role+'</span><img class="fighter-art" src="'+p.art+'" alt="'+p.name+'" loading="eager"><b>'+p.name+'</b><small>'+p.hp+' HP · '+p.speed+' VEL.</small></button>').join('');$('fighters').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{selected=+b.dataset.f;drawFighters();$('selectedStat').textContent=P[selected].name.toUpperCase()+' · '+P[selected].role});let p=P[selected];$('selectedDescription').textContent=p.desc+'  ·  Q: '+p.q+'  ·  E: '+p.e+'  ·  SÚPER: '+p.ult}
 drawFighters();
 function cleanup(){try{if(conn)conn.close()}catch(e){}try{if(peer)peer.destroy()}catch(e){}conn=null;peer=null;role='';guestStarted=false}
 function attachConnection(c){conn=c;c.on('open',()=>{if(role==='guest'){c.send({type:'hello',name:getName(),pokemon:P[selected].id})}});c.on('data',onNetwork);c.on('close',()=>{if(game&&role==='guest')$('netLabel').textContent='CONEXIÓN PERDIDA';if(role==='host'){remoteInput={dx:0,dy:0,ax:0,ay:0,fire:false,q:0,e:0,u:0};setStatus('El rival se ha desconectado.')}});c.on('error',e=>{if(role==='host')$('hostStatus').textContent='Error de conexión: '+e.type;else setStatus('No se pudo conectar. Comprueba el código e inténtalo otra vez.')})}
@@ -133,31 +141,33 @@ for(let x=75;x<950;x+=175){ctx.fillStyle='#8195a0';ctx.fillRect(x,18,3,20);ctx.f
 }
 function pathRound(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
 function ellipse(x,y,rx,ry,color){ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill()}
-function drawActor(f,t){let p=P.find(x=>x.id===f.id),dead=f.dead>0,deathT=Math.min(1,f.dead/1.05),bob=Math.sin(f.anim)*3,scale=1-deathT*.28,rot=dead?deathT*1.25:Math.sin(f.anim*.5)*.04+Math.sin((1-f.attack/.24)*Math.PI)*.18;let x=f.x+Math.cos(f.face)*f.attack*36,y=f.y+Math.sin(f.face)*f.attack*28+bob*(1-deathT),s=scale*(1+f.attack*.35);
-ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(s,s);
-ctx.globalAlpha=dead?Math.max(0,1-deathT*.9):1;
-ellipse(0,13,34,14,'rgba(0,0,0,.38)');
-if(f.shield>0||f.guard>0||f.inv>0){ctx.strokeStyle=f.guard>0?'#b4e4ff':f.shield>0?'#8bd8ed':'rgba(240,245,255,.6)';ctx.lineWidth=3;ctx.globalAlpha=.55+Math.sin(t*15)*.2;ctx.beginPath();ctx.ellipse(0,-6,39,47,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=dead?1-deathT*.9:1}
-let body=ctx.createRadialGradient(-12,-33,3,3,-3,49);body.addColorStop(0,'#ffffff');body.addColorStop(.16,p.color);body.addColorStop(.75,p.color);body.addColorStop(1,p.dark);
-if(f.id==='pika'){// ears and tail
-ctx.fillStyle=p.dark;ctx.beginPath();ctx.moveTo(-18,-34);ctx.lineTo(-32,-75);ctx.lineTo(-7,-45);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(17,-34);ctx.lineTo(31,-76);ctx.lineTo(9,-44);ctx.closePath();ctx.fill();
-ctx.fillStyle='#edcf4c';ctx.beginPath();ctx.moveTo(25,4);ctx.lineTo(45,-8);ctx.lineTo(38,-22);ctx.lineTo(53,-28);ctx.lineTo(49,-10);ctx.lineTo(58,1);ctx.lineTo(39,11);ctx.closePath();ctx.fill()}
-if(f.id==='char'){ctx.fillStyle=p.dark;ctx.beginPath();ctx.moveTo(-17,-30);ctx.lineTo(-49,-56);ctx.lineTo(-43,-20);ctx.lineTo(-21,-7);ctx.fill();ctx.beginPath();ctx.moveTo(17,-30);ctx.lineTo(49,-56);ctx.lineTo(43,-20);ctx.lineTo(21,-7);ctx.fill();ellipse(0,20,8,15,'#ff9947')}
-if(f.id==='blastoise'){ellipse(0,0,34,36,'#a6a18d');ctx.strokeStyle='#e2d5b4';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,29,31,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#c0b99e';ctx.fillRect(-8,-50,5,26);ctx.fillRect(11,-50,5,26)}
-if(f.id==='venu'){for(let i=0;i<5;i++){ctx.save();ctx.rotate(i*Math.PI*2/5);ellipse(0,-56,11,22,'#ba637b');ctx.restore()}ellipse(0,-56,8,8,'#e8c77b')}
-if(f.id==='gengar'){for(let i=0;i<7;i++){ctx.beginPath();ctx.moveTo(-26+i*8,-28);ctx.lineTo(-33+i*9,-55-(i%2)*9);ctx.lineTo(-15+i*8,-37);ctx.closePath();ctx.fillStyle=p.dark;ctx.fill()}}
-if(f.id==='lucario'){for(let x of [-17,17]){ctx.fillStyle=p.dark;ctx.beginPath();ctx.moveTo(x-7,-33);ctx.lineTo(x-11,-69);ctx.lineTo(x+8,-44);ctx.closePath();ctx.fill()}ellipse(0,19,6,14,'#dce5e8')}
-ellipse(0,-4,28,35,body);ellipse(0,-32,24,23,body);
-if(f.id==='blastoise'){ellipse(0,-4,22,25,'#b4a887');ctx.strokeStyle='#e5d5ae';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,-4,22,25,0,0,Math.PI*2);ctx.stroke()}
-if(f.id==='venu')ellipse(0,-5,27,31,'#679656');
-ellipse(-10,-33,5,7,'#f4f1dc');ellipse(10,-33,5,7,'#f4f1dc');ellipse(-9,-32,2.3,4,'#182431');ellipse(11,-32,2.3,4,'#182431');
-ctx.strokeStyle='#332b2a';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(0,-17,7,.2,Math.PI-.2);ctx.stroke();
-if(f.id==='pika'){ellipse(-25,-12,6,5,'#df6c65');ellipse(25,-12,6,5,'#df6c65')}
-if(f.id==='gengar'){ctx.fillStyle='#f0d18b';ctx.beginPath();ctx.moveTo(-15,-15);ctx.lineTo(-7,-7);ctx.lineTo(-2,-16);ctx.fill();ctx.beginPath();ctx.moveTo(2,-16);ctx.lineTo(8,-7);ctx.lineTo(16,-15);ctx.fill()}
-if(f.id==='char'){ellipse(0,-3,11,18,'#e9c38d')}
-if(f.id==='lucario'){ctx.fillStyle='#d8e3e5';ctx.beginPath();ctx.moveTo(-9,-3);ctx.lineTo(0,9);ctx.lineTo(9,-3);ctx.closePath();ctx.fill()}
-ctx.globalAlpha=1;ctx.restore();
-ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillStyle='#f1f4f3';ctx.shadowColor='#000';ctx.shadowBlur=6;ctx.fillText(f.name,x,y-69);ctx.shadowBlur=0;
+function drawActor(f,t){
+const p=P.find(x=>x.id===f.id),image=pokemonArt[f.id],dead=f.dead>0;
+const deathT=Math.min(1,f.dead/1.05),attackT=f.attack>0?1-f.attack/.24:0;
+const lunge=Math.sin(Math.max(0,Math.min(1,attackT))*Math.PI)*25;
+const bob=Math.sin(f.anim)*2.5*(1-deathT);
+const size={pika:126,char:158,blastoise:147,venu:148,gengar:132,lucario:140}[f.id]||138;
+const x=f.x+Math.cos(f.face)*lunge,y=f.y+bob+Math.sin(f.face)*lunge*.7+deathT*18;
+const scale=(1-deathT*.28)*(1+Math.sin(attackT*Math.PI)*.075);
+const alpha=dead?Math.max(0,1-deathT):1;
+ctx.save();ctx.globalAlpha=alpha;
+const shadow=ctx.createRadialGradient(f.x,f.y+18,3,f.x,f.y+18,size*.43);
+shadow.addColorStop(0,'rgba(0,0,0,.45)');shadow.addColorStop(1,'rgba(0,0,0,0)');
+ctx.fillStyle=shadow;ctx.beginPath();ctx.ellipse(f.x,f.y+20,size*.42,size*.17,0,0,Math.PI*2);ctx.fill();
+if(f.shield>0||f.guard>0||f.inv>0){ctx.strokeStyle=f.guard>0?'#c4edff':f.shield>0?'#8bd8ed':'rgba(245,250,255,.8)';ctx.lineWidth=3;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=18;ctx.beginPath();ctx.ellipse(f.x,f.y-30,size*.36,size*.48,0,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0}
+ctx.save();ctx.translate(x,y-12);ctx.rotate((dead?deathT*1.35:Math.sin(f.anim*.5)*.025)+Math.sin(attackT*Math.PI)*.12);ctx.scale(scale*(f.side===0?1:-1),scale);
+if(image&&image.complete&&image.naturalWidth>0){
+const top=size*(f.id==='char'?.89:.82);
+ctx.shadowColor=p.color;ctx.shadowBlur=f.inv>0?23:8;ctx.drawImage(image,-size/2,-top,size,size);ctx.shadowBlur=0;
+if(f.hurt>0){ctx.save();ctx.globalCompositeOperation='source-atop';ctx.globalAlpha=Math.min(.7,f.hurt*2.8);ctx.fillStyle='#fff';ctx.fillRect(-size/2,-top,size,size);ctx.restore()}
+}else{
+const fallback=ctx.createRadialGradient(-12,-42,3,0,-10,size*.45);fallback.addColorStop(0,'#fff');fallback.addColorStop(.22,p.color);fallback.addColorStop(1,p.dark);
+ctx.fillStyle=fallback;ctx.beginPath();ctx.ellipse(0,-16,size*.27,size*.34,0,0,Math.PI*2);ctx.fill();
+ctx.font='bold '+Math.round(size*.45)+'px system-ui';ctx.textAlign='center';ctx.fillText(p.emoji,0,-8);
+}
+ctx.restore();ctx.restore();
+ctx.save();ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.font='900 12px system-ui';ctx.fillStyle='#f1f4f3';ctx.shadowColor='#000';ctx.shadowBlur=7;ctx.fillText(f.name,f.x,f.y-size*.73);ctx.shadowBlur=0;
+const bw=56,bh=7;pathRound(f.x-bw/2,f.y-size*.66,bw,bh,4);ctx.fillStyle='#0a1119d9';ctx.fill();pathRound(f.x-bw/2,f.y-size*.66,bw*Math.max(0,f.hp/f.max),bh,4);ctx.fillStyle=f.side===0?'#8bd99a':'#df8176';ctx.fill();ctx.restore();
 }
 function drawProjectile(s){ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.angle);let col=s.type==='fire'?'#ff9957':s.type==='shadow'?'#b18bdd':s.type==='charged'?'#8fc9ef':s.type==='triple'?'#83d9ed':s.type==='electric'?'#fff09c':s.type==='roots'?'#9bcc75':'#c3e5f2';ctx.globalAlpha=.25;ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(-15,0,24,9,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;let grad=ctx.createRadialGradient(-3,-4,1,0,0,s.r*1.6);grad.addColorStop(0,'#fff');grad.addColorStop(.3,col);grad.addColorStop(1,s.type==='fire'?'#a93427':'#253b54');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(0,0,s.r,0,Math.PI*2);ctx.fill();ctx.restore()}
 function drawEffects(){effects.forEach(e=>{let a=e.life/e.max,progress=1-a;ctx.save();ctx.globalAlpha=a;ctx.strokeStyle=e.color;ctx.lineWidth=e.type==='beam'?22:4;ctx.shadowColor=e.color;ctx.shadowBlur=18;ctx.beginPath();if(e.type==='beam'){ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+Math.cos(e.angle)*400,e.y+Math.sin(e.angle)*300)}else{let r=e.type==='death'?20+progress*80:e.type==='dash'?20+progress*45:30+progress*100;ctx.ellipse(e.x,e.y,r,r*.58,0,0,Math.PI*2)}ctx.stroke();ctx.restore()})}
