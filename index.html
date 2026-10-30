@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#080d15"><title>Poké Arena Championship</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js'"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js'"></script>
+
 <style>
 :root{color-scheme:dark;--bg:#080d15;--panel:#15212d;--line:#3a5062;--gold:#dfbd78;--muted:#94a7b6;--white:#eef2f4}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 50% -15%,#314658 0,#142331 40%,#080d15 85%);color:var(--white);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}body{padding:14px}button,input{font:inherit}button{cursor:pointer;color:inherit}.app{max-width:1200px;margin:auto}.header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:3px 0 16px;padding-bottom:15px;border-bottom:1px solid #ffffff20}.brand{font-size:25px;font-weight:1000;letter-spacing:2px}.brand span{color:var(--gold)}.subtitle{font-size:9px;letter-spacing:3px;color:#92a5b4;margin-top:3px}.season{font-size:9px;letter-spacing:2px;color:var(--gold);border:1px solid #826e49;padding:8px 10px}
@@ -356,7 +356,21 @@ while(shot3d.length<game.projectiles.length){const group=makeProjectile3D(game.p
 renderer3d.render(scene3d,camera3d);
 }
 
-if(window.THREE&&initArena3D())loadDetailedPokemonModels();
+async function loadThreeScript(src){
+return new Promise((resolve,reject)=>{const el=document.createElement('script');el.src=src;el.onload=()=>resolve(true);el.onerror=()=>{el.remove();reject(new Error('No carga '+src))};document.head.appendChild(el)})
+}
+async function bootThreeArena(){
+if(!window.THREE){
+$('netLabel').textContent='CARGANDO MOTOR 3D…';
+const cdns=['https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js','https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js','https://unpkg.com/three@0.160.0/build/three.min.js'];
+for(const src of cdns){if(window.THREE)break;try{await loadThreeScript(src)}catch(err){console.warn(err)}}
+}
+if(window.THREE){
+try{if(initArena3D()){ $('netLabel').textContent='ESTADIO 3D · CARGANDO MODELOS';loadDetailedPokemonModels()}else{$('netLabel').textContent='ESTADIO COMPATIBLE'}}
+catch(err){console.error(err);$('netLabel').textContent='ERROR MOTOR 3D · MODO COMPATIBLE'}
+}else{$('netLabel').textContent='MOTOR 3D NO DISPONIBLE · MODO COMPATIBLE'}
+}
+bootThreeArena();
 
 requestAnimationFrame(frame);
 $('hostBtn').onclick=hostRoom;$('joinBtn').onclick=joinRoom;$('botBtn').onclick=startBotGame;$('copyCode').onclick=()=>{let v=$('roomCode').textContent;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(()=>$('hostStatus').textContent='Código copiado. Envíalo a tu rival.').catch(()=>$('hostStatus').textContent='Selecciona y copia el código: '+v);else $('hostStatus').textContent='Código: '+v};
