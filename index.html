@@ -132,6 +132,7 @@ function makePokemon3D(f){
  return group;
 }
 function init3D(){
+ try {
  if(!window.THREE){$('arena3d').style.display='none';canvas.style.display='block';canvas.style.width='100%';canvas.style.height='auto';return;}
  raycaster3d=new THREE.Raycaster();ground3d=new THREE.Plane(new THREE.Vector3(0,1,0),0);aimPoint3d=new THREE.Vector3();
  const host=$('arena3d');scene3d=new THREE.Scene();scene3d.background=new THREE.Color(0x9ab7c4);scene3d.fog=new THREE.Fog(0x9ab7c4,24,48);
@@ -145,8 +146,10 @@ function init3D(){
  for(let x of [-16,16]){let wall=new THREE.Mesh(new THREE.BoxGeometry(.5,1.3,22),wallmat);wall.position.set(x,.65,0);wall.castShadow=true;scene3d.add(wall)}
  for(let i=0;i<6;i++){let pillar=new THREE.Mesh(new THREE.CylinderGeometry(.45,.65,2.2,6),new THREE.MeshStandardMaterial({color:0x687b76}));pillar.position.set((i%3-1)*8,1.1,(i<3?-7:7));pillar.castShadow=true;scene3d.add(pillar)}
  player3d=makePokemon3D({p:P[chosen]});enemy3d=makePokemon3D({p:P[(chosen+1)%P.length]});scene3d.add(player3d,enemy3d);
+ camera3d.position.set(-14,8,0);camera3d.lookAt(-7,1,0);
  const resize=()=>{let w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer3d.setSize(w,h,false);camera3d.aspect=w/h;camera3d.updateProjectionMatrix()};new ResizeObserver(resize).observe(host);resize();
  renderer3d.domElement.addEventListener('pointermove',aim3D);renderer3d.domElement.addEventListener('pointerdown',e=>{if(!game||game.over)return;aim3D(e);attack(game.player,Math.atan2(pointer.y-game.player.y,pointer.x-game.player.x))});
+ } catch(err) { console.warn('3D no disponible; se activa el modo clásico',err);renderer3d=null;scene3d=null;$('arena3d').style.display='none';canvas.style.display='block';canvas.style.width='100%';canvas.style.height='auto'; }
 }
 function aim3D(e){if(!renderer3d||!game||!raycaster3d)return;let r=renderer3d.domElement.getBoundingClientRect();let mouse=new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);raycaster3d.setFromCamera(mouse,camera3d);if(raycaster3d.ray.intersectPlane(ground3d,aimPoint3d)){pointer.x=Math.max(0,Math.min(W,(aimPoint3d.x+16)/32*W));pointer.y=Math.max(0,Math.min(H,(aimPoint3d.z+11)/22*H))}}
 function sync3D(){
