@@ -75,7 +75,19 @@ function superMove(f,a){if(f.super<100||game.over)return;f.super=0;let p=f.p,tar
 function useGadget(f){if(f.gadget<=0||game.over)return;f.gadget--;let p=f.p,target=f.human?game.enemy:game.player;if(p.id==='gengar'){let a=Math.atan2(target.y-f.y,target.x-f.x);f.x=Math.max(30,Math.min(W-30,f.x+Math.cos(a)*115));f.y=Math.max(30,Math.min(H-30,f.y+Math.sin(a)*115));f.inv=14}else if(p.id==='blastoise'){f.shield=100}else if(p.id==='venu'){f.hp=Math.min(f.max,f.hp+700);for(let i=0;i<15;i++)particle(f.x,f.y,'#8de86c',4)}else if(p.id==='char'){f.speedBoost=100}else if(p.id==='pika'){f.speedBoost=90;for(let i=0;i<6;i++)particle(f.x,f.y,'#fff36a',4)}else{f.damageBoost=100}}
 function update(dt){let g=game,p=g.player,e=g.enemy;if(g.over)return;g.time=Math.max(0,g.time-dt/60);for(let f of [p,e]){f.cd=Math.max(0,f.cd-dt);f.inv=Math.max(0,f.inv-dt);f.slow=Math.max(0,f.slow-dt);f.shield=Math.max(0,f.shield-dt);f.speedBoost=Math.max(0,(f.speedBoost||0)-dt);f.damageBoost=Math.max(0,(f.damageBoost||0)-dt);f.attackAnim=Math.max(0,f.attackAnim-dt)}
 let dx=(keys.right?1:0)-(keys.left?1:0)+(keys.d?1:0)-(keys.a?1:0),dy=(keys.down?1:0)-(keys.up?1:0)+(keys.s?1:0)-(keys.w?1:0);if(dx||dy){let old=p.speed;if(p.speedBoost>0)p.speed=old*1.65;move(p,dx,dy,dt);p.speed=old}p.face=Math.atan2(pointer.y-p.y,pointer.x-p.x);
-let d=dist(e,p);if(d>210)move(e,(p.x-e.x)/d,(p.y-e.y)/d,dt*.78);else if(d<125)move(e,(e.x-p.x)/d,(e.y-p.y)/d,dt*.72);else move(e,Math.cos(performance.now()/800)*.5,Math.sin(performance.now()/800)*.5,dt*.4);e.face=Math.atan2(p.y-e.y,p.x-e.x);if(e.cd<=0&&d<e.p.range+25)attack(e,e.face);
+// IA táctica: mantiene distancia óptima, rodea obstáculos y esquiva proyectiles
+let d=dist(e,p),ideal=e.p.id==='char'||e.p.id==='lucario'?245:e.p.id==='blastoise'?145:185;
+let threat=null,threatD=1e9;
+for(const s of g.shots){if(s.owner===e)continue;let vx=s.vx,vy=s.vy,mag=Math.hypot(vx,vy)||1,rx=e.x-s.x,ry=e.y-s.y,t=Math.max(0,Math.min(18,(rx*vx+ry*vy)/(mag*mag))),cx=s.x+vx*t,cy=s.y+vy*t,dd=Math.hypot(e.x-cx,e.y-cy);if(dd<42&&t<14&&dd<threatD){threat={x:cx,y:cy,t};threatD=dd}}
+let ax=0,ay=0;
+if(threat){let sx=e.x-threat.x,sy=e.y-threat.y,sl=Math.hypot(sx,sy)||1;ax=sx/sl*1.5;ay=sy/sl*1.5}
+else{let ux=(p.x-e.x)/(d||1),uy=(p.y-e.y)/(d||1);if(d>ideal+28){ax=ux;ay=uy}else if(d<ideal-35){ax=-ux;ay=-uy}else{let side=Math.sin(performance.now()/950)>0?1:-1;ax=-uy*side*.78;ay=ux*side*.78}
+let nearest=null,nd=1e9;for(const o of g.obstacles){let ox=o.x+o.w/2-e.x,oy=o.y+o.h/2-e.y,od=Math.hypot(ox,oy);if(od<nd){nd=od;nearest={x:ox,y:oy}}}if(nearest&&nd<100){ax-=nearest.x/nd*.8;ay-=nearest.y/nd*.8}}
+let oldFace=e.face;e.face=Math.atan2(p.y-e.y,p.x-e.x);if(ax||ay)move(e,ax,ay,dt*.9);
+d=dist(e,p);let clear=!g.obstacles.some(o=>{let vx=p.x-e.x,vy=p.y-e.y,l=vx*vx+vy*vy||1,t=Math.max(0,Math.min(1,((o.x+o.w/2-e.x)*vx+(o.y+o.h/2-e.y)*vy)/l)),qx=e.x+t*vx,qy=e.y+t*vy;return qx>o.x-18&&qx<o.x+o.w+18&&qy>o.y-18&&qy<o.y+o.h+18});
+if(e.super>=100&&d<e.p.range*1.12)superMove(e,e.face);else if(e.gadget>0&&((e.hp/e.max<.38&&['blastoise','venu'].includes(e.p.id))||(d<95&&['pika','gengar','char'].includes(e.p.id))))useGadget(e);
+if(e.cd<=0&&d<e.p.range+15&&clear){let lead=Math.min(12,d/Math.max(1,e.p.id==='char'?6:8));let aim=Math.atan2(p.y-e.y+(keys.down?0:0),p.x-e.x);if(p.walk)aim+=0;attack(e,aim)}
+
 if(mode==='survival'&&Math.random()<.002*dt&&g.pickups.length<5)g.pickups.push({x:70+Math.random()*820,y:60+Math.random()*420});for(let i=g.pickups.length-1;i>=0;i--){let q=g.pickups[i];if(dist(p,q)<32){p.max+=180;p.hp=Math.min(p.max,p.hp+180);p.damage*=1.04;g.pickups.splice(i,1);for(let j=0;j<12;j++)particle(q.x,q.y,'#80e9a7',4)}}
 for(let i=g.shots.length-1;i>=0;i--){let s=g.shots[i];s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;let target=s.owner.human?e:p;if(s.kind==='burst'&&dist(s,target)<s.r+22&&!s.hit.includes(target)){damage(target,s.damage,s.owner);s.hit.push(target)}else if(s.kind!=='burst'&&dist(s,target)<s.r+20&&!s.hit.includes(target)){damage(target,s.damage,s.owner);s.hit.push(target);if(s.id==='venu')target.slow=65;if(s.id==='gengar')target.slow=50;if(s.id==='lucario'&&s.kind==='super')s.life=0}if(s.life<=0||s.x<0||s.x>W||s.y<0||s.y>H||g.obstacles.some(o=>s.x>o.x&&s.x<o.x+o.w&&s.y>o.y&&s.y<o.y+o.h)){{let pc=s.id==='char'?'#ff9a42':s.id==='pika'?'#fff36a':s.id==='venu'?'#a5f477':s.id==='gengar'?'#c58aff':s.id==='blastoise'?'#8cecff':'#9bcaff';for(let j=0;j<(s.id==='char'?10:6);j++)particle(s.x,s.y,pc,3+Math.random()*2);}g.shots.splice(i,1)}}
 for(let i=g.particles.length-1;i>=0;i--){let q=g.particles[i];q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;if(q.life<=0)g.particles.splice(i,1)}
@@ -104,27 +116,31 @@ function rounded(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundR
 function render(){
 let g=game;if(!g)return;
 ctx.clearRect(0,0,W,H);
-// Estadio exterior y gradas
-let sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#263b57');sky.addColorStop(.48,'#182a3b');sky.addColorStop(1,'#101d2b');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
-ctx.fillStyle='#536477';ctx.fillRect(0,0,W,48);ctx.fillRect(0,H-48,W,48);ctx.fillRect(0,0,38,H);ctx.fillRect(W-38,0,38,H);
-for(let y=8;y<44;y+=12){for(let x=48;x<W-40;x+=18){ctx.fillStyle=['#e2b35c','#9ab6c7','#c87570','#7c9c7e','#d7d9df'][(Math.floor(x/18)+Math.floor(y/12))%5];ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x,H-y,3.5,0,Math.PI*2);ctx.fill()}}
-for(let x=8;x<W;x+=18){ctx.fillStyle='#8da2b3';ctx.beginPath();ctx.arc(x,22,2.5,0,7);ctx.arc(x,H-22,2.5,0,7);ctx.fill()}
-let turf=ctx.createLinearGradient(0,50,0,H-50);turf.addColorStop(0,'#78a85d');turf.addColorStop(.5,'#4e914f');turf.addColorStop(1,'#36764c');ctx.fillStyle=turf;ctx.fillRect(38,48,W-76,H-96);
-// Césped a franjas suaves
-for(let i=0;i<10;i++){ctx.fillStyle=i%2?'#ffffff08':'#173f2810';ctx.fillRect(38,48+i*44,W-76,44)}
-// Límites del campo
-ctx.strokeStyle='#f4e8b8';ctx.lineWidth=5;ctx.strokeRect(58,66,W-116,H-132);ctx.strokeStyle='#ffffff70';ctx.lineWidth=2;ctx.strokeRect(68,76,W-136,H-152);
-ctx.beginPath();ctx.moveTo(W/2,76);ctx.lineTo(W/2,H-76);ctx.stroke();ctx.beginPath();ctx.arc(W/2,H/2,84,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(W/2,H/2,7,0,Math.PI*2);ctx.fillStyle='#fff0bd';ctx.fill();
-// Emblema central
-ctx.save();ctx.translate(W/2,H/2);ctx.globalAlpha=.22;ctx.fillStyle='#f6e6ae';ctx.beginPath();ctx.arc(0,0,52,0,7);ctx.fill();ctx.fillStyle='#3e7847';ctx.beginPath();ctx.arc(0,0,39,0,7);ctx.fill();ctx.fillStyle='#f6e6ae';ctx.fillRect(-43,-4,86,8);ctx.beginPath();ctx.arc(0,0,14,0,7);ctx.fill();ctx.restore();
-// Decoración: arbustos, flores y rocas
-for(let i=0;i<34;i++){let x=75+(i*137)%810,y=85+(i*83)%365;if(Math.abs(x-W/2)<125&&Math.abs(y-H/2)<95)continue;ctx.fillStyle=i%2?'#285f40':'#397348';ctx.beginPath();ctx.arc(x,y,5+(i%4),0,7);ctx.fill();if(i%3===0){ctx.fillStyle='#f4d58a';ctx.beginPath();ctx.arc(x+3,y-3,2,0,7);ctx.fill()}}
-for(const o of g.obstacles){
-ctx.fillStyle='#1b382b88';ctx.beginPath();ctx.ellipse(o.x+o.w/2,o.y+o.h/2+12,o.w*.62,o.h*.48,0,0,7);ctx.fill();
-let rock=ctx.createLinearGradient(o.x,o.y,o.x+o.w,o.y+o.h);rock.addColorStop(0,'#b4c08b');rock.addColorStop(.45,'#718d5a');rock.addColorStop(1,'#405e49');ctx.fillStyle=rock;ctx.beginPath();ctx.roundRect(o.x,o.y,o.w,o.h,15);ctx.fill();ctx.strokeStyle='#d1d49a';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#ffffff25';ctx.beginPath();ctx.roundRect(o.x+8,o.y+6,o.w-16,Math.max(8,o.h*.25),8);ctx.fill();
-}
-// Entradas y banderas de los entrenadores
-for(let side of [0,1]){let x=side?W-52:52;ctx.fillStyle='#d8d0a4';ctx.fillRect(x-5,H/2-42,10,84);ctx.fillStyle=side?'#d85f58':'#4b9ed1';ctx.beginPath();ctx.moveTo(x,H/2-40);ctx.lineTo(x+(side?-28:28),H/2-30);ctx.lineTo(x,H/2-20);ctx.fill()}
+// GRAN ESTADIO DE COMBATE: recinto inspirado en los torneos de la serie
+let bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#15233c');bg.addColorStop(.55,'#273b4b');bg.addColorStop(1,'#101b2e');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+// Gradas escalonadas con público y focos
+for(let band=0;band<4;band++){let yy=band*12;ctx.fillStyle=['#34465c','#536174','#26374d','#17283c'][band];ctx.fillRect(0,yy,W,12);ctx.fillRect(0,H-12-yy,W,12)}
+for(let y=5;y<49;y+=9){for(let x=12;x<W-12;x+=13){let n=(x*7+y*11)%9;ctx.fillStyle=['#f0c76b','#e98d80','#8fc9d5','#e8e7d5','#8eb18a','#b5a0dc','#e6a5c0'][n%7];ctx.beginPath();ctx.arc(x,y+2,2.7,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x,H-y-2,2.7,0,Math.PI*2);ctx.fill()}}
+for(let x=70;x<W;x+=205){ctx.fillStyle='#dce8f5';ctx.fillRect(x,47,5,12);ctx.fillStyle='#fff5ce';ctx.shadowBlur=18;ctx.shadowColor='#fff1b0';ctx.beginPath();ctx.arc(x+2,61,5,0,7);ctx.fill();ctx.shadowBlur=0}
+// Estructura y pantallas del estadio
+ctx.fillStyle='#0d1728';ctx.fillRect(0,48,W,12);ctx.fillRect(0,H-60,W,12);
+rounded(380,5,200,35,9,'#101b31');ctx.strokeStyle='#d5b968';ctx.lineWidth=2;ctx.strokeRect(380,5,200,35);ctx.fillStyle='#ffe58b';ctx.font='900 15px system-ui';ctx.textAlign='center';ctx.fillText('POKÉMON LEAGUE',480,27);
+ctx.fillStyle='#17263b';ctx.fillRect(38,60,W-76,H-120);
+// Suelo profesional de combate: anillos concéntricos y sectores
+let floor=ctx.createRadialGradient(480,270,30,480,270,440);floor.addColorStop(0,'#a6b6a1');floor.addColorStop(.55,'#718b7c');floor.addColorStop(1,'#405c58');ctx.fillStyle=floor;ctx.fillRect(38,60,W-76,H-120);
+for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#ffffff09':'#122e3210';ctx.fillRect(40,60+i*35,W-80,35)}
+// Borde exterior de seguridad
+ctx.strokeStyle='#e4d6a5';ctx.lineWidth=12;ctx.strokeRect(53,74,W-106,H-148);ctx.strokeStyle='#24364a';ctx.lineWidth=4;ctx.strokeRect(64,85,W-128,H-170);
+// Marcas de competición y círculo central
+ctx.strokeStyle='#f6edcf';ctx.lineWidth=4;ctx.beginPath();ctx.arc(480,270,112,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(480,86);ctx.lineTo(480,454);ctx.stroke();ctx.strokeRect(80,155,100,230);ctx.strokeRect(780,155,100,230);
+ctx.fillStyle='#f4e8c5';ctx.beginPath();ctx.arc(480,270,8,0,7);ctx.fill();
+// Gran emblema Poké Ball incrustado en el suelo
+ctx.save();ctx.translate(480,270);ctx.globalAlpha=.32;ctx.fillStyle='#e9e4ce';ctx.beginPath();ctx.arc(0,0,65,Math.PI,0);ctx.fill();ctx.fillStyle='#b85c56';ctx.beginPath();ctx.arc(0,0,65,Math.PI,0);ctx.fill();ctx.fillStyle='#e9e4ce';ctx.fillRect(-65,-3,130,6);ctx.strokeStyle='#e9e4ce';ctx.lineWidth=7;ctx.beginPath();ctx.arc(0,0,65,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#e9e4ce';ctx.beginPath();ctx.arc(0,0,17,0,7);ctx.fill();ctx.fillStyle='#49665f';ctx.beginPath();ctx.arc(0,0,9,0,7);ctx.fill();ctx.restore();
+// Columnas, paneles LED y puertas de entrada de entrenadores
+for(let side=0;side<2;side++){let x=side?14:W-25;ctx.fillStyle='#273b53';ctx.fillRect(x,125,11,290);ctx.fillStyle=side?'#4aa3d5':'#d96d61';ctx.fillRect(x,165,11,75);ctx.fillRect(x,300,11,75)}
+for(let side=0;side<2;side++){let x=side?75:885;ctx.fillStyle='#14253a';ctx.fillRect(x-24,245,48,56);ctx.strokeStyle=side?'#64c5ec':'#f08b79';ctx.lineWidth=3;ctx.strokeRect(x-24,245,48,56);ctx.fillStyle='#f8e6b6';ctx.font='900 10px system-ui';ctx.textAlign='center';ctx.fillText(side?'AZUL':'ROJO',x,278)}
+// Obstáculos elevados: bloques de roca de gimnasio con volumen
+for(const o of g.obstacles){ctx.fillStyle='#142b3299';ctx.beginPath();ctx.ellipse(o.x+o.w/2,o.y+o.h/2+13,o.w*.62,o.h*.48,0,0,7);ctx.fill();let rock=ctx.createLinearGradient(o.x,o.y,o.x+o.w,o.y+o.h);rock.addColorStop(0,'#c2c5ad');rock.addColorStop(.35,'#7e988d');rock.addColorStop(1,'#344f55');ctx.fillStyle=rock;ctx.beginPath();ctx.roundRect(o.x,o.y,o.w,o.h,13);ctx.fill();ctx.strokeStyle='#e0d8b9';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#ffffff35';ctx.beginPath();ctx.roundRect(o.x+7,o.y+5,o.w-14,Math.max(8,o.h*.2),7);ctx.fill();ctx.fillStyle='#344e50';ctx.fillRect(o.x+o.w*.25,o.y+o.h*.52,o.w*.5,4)}
 // Pickups
 for(const q of g.pickups){ctx.save();ctx.shadowBlur=18;ctx.shadowColor='#a8ffcf';ctx.fillStyle='#9effbd';ctx.beginPath();ctx.arc(q.x,q.y,14,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 17px system-ui';ctx.textAlign='center';ctx.fillText('✦',q.x,q.y+6);ctx.restore()}
 // Proyectiles y efectos
